@@ -16,16 +16,6 @@ public:
     int get_id() { return id; }
 };
 
-class MyClass
-{
-    static ID id;
-public:
-    static int get_id() 
-    {
-        return id.get_id();
-    }
-};
-
 class CWorkDB
 {
 public:
@@ -119,7 +109,7 @@ int main(void)
 
     //ID formId;
     // Сформированный запрос вставки через запятую
-    if (workDB.InsertToTable((char *)"user", (char*)"2, 'Smirnov'") == false)
+    if (workDB.InsertToTable((char *)"user", (char*)"1, 'FIO'") == false)
     {
        std::cout << "Error InsertToTable";
        return -1; 
