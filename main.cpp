@@ -1,97 +1,5 @@
-#include <iostream>
-#include <mysql.h>
-#include <string>
-#include <stdarg.h>
-
-class ID
-{
-    int id;
-public:
-    ID() {
-        static int counter = 0;
-        id = counter++;
-    }
-    ID(const ID& root) = delete;
-    ID& operator=(const ID&) = delete;
-    int get_id() { return id; }
-};
-
-class CWorkDB
-{
-public:
-    CWorkDB()
-    {
-        con = mysql_init(NULL);
-    }
-
-    ~CWorkDB()
-    {
-        mysql_close(con);
-    }
-
-    MYSQL *GetConnection() const
-    {
-        return con;
-    }
-
-    bool connect(const char *host, const char *login, const char *password, const char *database) const
-    {
-        return mysql_real_connect(con, host, login, password, database, 0, NULL, 0);
-    }
-
-    bool query(const char *_query) const
-    {
-        return mysql_query(con, _query);
-    }
-
-    void PrintfTable(const char *_tableName, const std::string &_row = "*")
-    {
-        std::string sQuery = "select ";
-        sQuery.append(_row);
-        sQuery.append("from ");
-        sQuery.append(_tableName);
-
-        query(sQuery.c_str());
-        res = mysql_store_result(con);
-
-        if (res == NULL)
-        {
-            std::cout << "Error PrintTable";
-            return;
-        }
-
-        int countColumn = mysql_field_count(con);
-        if(mysql_num_rows(res) > 0)
-        {
-            while ((row = mysql_fetch_row(res)) != NULL)
-            {
-                for (long i = 0; i < countColumn; ++i)
-                    fprintf(stdout, "%s ", row[i]);
-
-                fprintf(stdout, "\n");
-            }
-        }
-
-        mysql_free_result(res);
-    }
-
-    bool InsertToTable(const char *_tableName, const char *_query )
-    {
-        std::string sQuery = _query;
-        sQuery.insert(0, " values (");
-        sQuery.insert(0, _tableName);
-        sQuery.insert(0, "insert into ");
-
-        sQuery.append(")");
-
-        return query(sQuery.c_str());
-    }
-
-private:
-    MYSQL *con = nullptr;
-    MYSQL_RES *res = nullptr;
-    MYSQL_ROW row;
-};
+#include "db.h"
+#include <sstream>
 
 int main(void)
 {
@@ -99,6 +7,19 @@ int main(void)
     if (workDB.GetConnection() == nullptr)
         return 0;
 
+    std::string host, login, password, database;
+
+    std::cout << "Host: ";
+    std::getline(std::cin, host);
+
+    std::cout << "login: ";
+    std::getline(std::cin, login);
+
+    std::cout << "password: ";
+    std::getline(std::cin, password);
+
+    std::cout << "database: ";
+    std::getline(std::cin, database);
 
     if (!workDB.connect((char *)"localhost", (char *)"root", (char *)"", (char *)"testdb"))
     {
@@ -106,16 +27,22 @@ int main(void)
         return -1;
     }
 
+    workDB.SetTable("user");
 
-    //ID formId;
+    ID formId;
     // Сформированный запрос вставки через запятую
-    if (workDB.InsertToTable((char *)"user", (char*)"1, 'FIO'") == false)
+    if (workDB.Insert((char *)"5, 'FIO'") == false)
     {
-       std::cout << "Error InsertToTable";
-       return -1; 
+        std::cout << "Error InsertToTable";
+        return -1;
     }
 
+    if (workDB.Delete("id = 5") == false)
+    {
+        std::cout << "Error DeleteFromtable";
+    }
 
-    workDB.PrintfTable((char *)"user");
+    workDB.Print();
+
     return 0;
 }
